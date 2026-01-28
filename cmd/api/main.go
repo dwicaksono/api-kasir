@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"time"
 
 	"kasir-api/internal/config"
 	"kasir-api/internal/handler"
 	"kasir-api/internal/repository"
-	"kasir-api/internal/service"
+	"kasir-api/internal/usecase"
 
 	_ "github.com/lib/pq"
 )
@@ -31,16 +32,19 @@ func main() {
 
 	// Dependencies Injection
 	// Repositories
-	producRepo := repository.NewProductRepository(db)
+	productRepo := repository.NewProductRepository(db)
 	categoryRepo := repository.NewCategoryRepository(db)
 
-	// Services
-	productService := service.NewProductService(producRepo)
-	categoryService := service.NewCategoryService(categoryRepo)
+	// Context Timeout
+	timeout := 2 * time.Second
+
+	// Usecases
+	productUsecase := usecase.NewProductUsecase(productRepo, timeout)
+	categoryUsecase := usecase.NewCategoryUsecase(categoryRepo, timeout)
 
 	// Handlers
-	productHandler := handler.NewProductHandler(productService)
-	categoryHandler := handler.NewCategoryHandler(categoryService)
+	productHandler := handler.NewProductHandler(productUsecase)
+	categoryHandler := handler.NewCategoryHandler(categoryUsecase)
 
 	// Router
 	mux := http.NewServeMux()

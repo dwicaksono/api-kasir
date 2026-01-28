@@ -3,22 +3,21 @@ package handler
 import (
 	"encoding/json"
 	"kasir-api/internal/domain"
-	"kasir-api/internal/service"
 	"net/http"
 	"strconv"
 )
 
 type ProductHandler struct {
-	service *service.ProductService
+	usecase domain.ProductUsecase
 }
 
-func NewProductHandler(service *service.ProductService) *ProductHandler {
-	return &ProductHandler{service: service}
+func NewProductHandler(usecase domain.ProductUsecase) *ProductHandler {
+	return &ProductHandler{usecase: usecase}
 }
 
 func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	products, err := h.service.GetAll(r.Context())
+	products, err := h.usecase.GetAll(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -34,7 +33,7 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	product, err := h.service.GetByID(r.Context(), id)
+	product, err := h.usecase.GetByID(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -49,7 +48,7 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := h.service.Create(r.Context(), &product); err != nil {
+	if err := h.usecase.Create(r.Context(), &product); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -69,7 +68,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := h.service.Update(r.Context(), id, &product); err != nil {
+	if err := h.usecase.Update(r.Context(), id, &product); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -84,7 +83,7 @@ func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := h.service.Delete(r.Context(), id); err != nil {
+	if err := h.usecase.Delete(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
