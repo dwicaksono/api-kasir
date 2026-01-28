@@ -51,6 +51,13 @@ func Run() {
 	// Router
 	mux := http.NewServeMux()
 
+	// Health Check
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok"}`))
+	})
+
 	// Product Routes
 	mux.HandleFunc("GET /api/products", productHandler.GetAll)
 	mux.HandleFunc("POST /api/products", productHandler.Create)
