@@ -2,35 +2,38 @@ package config
 
 import (
 	"log"
+
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	ServerAddress string `mapstructure:"SERVER_ADDRESS"`
-	DBUrl         string `mapstructure:"DB_CONN"`
+	Port   string
+	DBConn string
 }
 
 func LoadConfig() *Config {
 	viper.SetConfigFile(".env")
-	viper.AutomaticEnv()
-
 	if err := viper.ReadInConfig(); err != nil {
 		log.Println("No .env file found, using environment variables")
 	}
+	viper.AutomaticEnv()
 
-	var config Config
-	if err := viper.Unmarshal(&config); err != nil {
-		log.Fatalf("Unable to decode into struct: %v", err)
+	port := viper.GetString("PORT")
+	if port == "" {
+		port = ":8080"
+	}
+	// Ensure port starts with colon
+	if port[0] != ':' {
+		port = ":" + port
 	}
 
-	if config.ServerAddress == "" {
-		port := viper.GetString("PORT")
-		if port != "" {
-			config.ServerAddress = ":" + port
-		} else {
-			config.ServerAddress = ":8080"
-		}
+	dbConn := viper.GetString("DB_CONN")
+	if dbConn == "" {
+		log.Fatal("DB_CONN environment variable is required")
 	}
 
-	return &config
+	return &Config{
+		Port:   port,
+		DBConn: dbConn,
+	}
 }

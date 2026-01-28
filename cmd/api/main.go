@@ -1,52 +1,67 @@
 package main
 
 import (
+	"database/sql"
+	"log"
+	"net/http"
+
 	"kasir-api/internal/config"
 	"kasir-api/internal/handler"
 	"kasir-api/internal/repository"
-	"kasir-api/internal/usecase"
-	"kasir-api/pkg/database"
-	"log"
-	"net/http"
-	"time"
+	"kasir-api/internal/service"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
 	// Load Configuration
 	cfg := config.LoadConfig()
 
-	// Initialize Database
-	dbPool, err := database.Connect(cfg.DBUrl)
+	// Connect to Database
+	db, err := sql.Open("postgres", cfg.DBConn)
 	if err != nil {
-		log.Fatalf("Could not connect to database: %v", err)
+		log.Fatal(err)
 	}
-	defer dbPool.Close()
+	defer db.Close()
 
-	// Initialize Repositories
-	productRepo := repository.NewProductRepository(dbPool)
-	categoryRepo := repository.NewCategoryRepository(dbPool)
+	if err := db.Ping(); err != nil {
+		log.Fatal("Could not connect to database:", err)
+	}
+	log.Println("Database connected successfully")
 
-	// Initialize Usecases
-	timeout := 2 * time.Second
-	productUsecase := usecase.NewProductUsecase(productRepo, timeout)
-	categoryUsecase := usecase.NewCategoryUsecase(categoryRepo, timeout)
+	// Dependencies Injection
+	// Repositories
+	producRepo := repository.NewProductRepository(db)
+	categoryRepo := repository.NewCategoryRepository(db)
 
-	// Initialize Router
+	// Services
+	productService := service.NewProductService(producRepo)
+	categoryService := service.NewCategoryService(categoryRepo)
+
+	// Handlers
+	productHandler := handler.NewProductHandler(productService)
+	categoryHandler := handler.NewCategoryHandler(categoryService)
+
+	// Router
 	mux := http.NewServeMux()
 
-	// Health Check
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"status":"OK", "message":"API Running"}`))
-	})
+	// Product Routes
+	mux.HandleFunc("GET /api/products", productHandler.GetAll)
+	mux.HandleFunc("POST /api/products", productHandler.Create)
+	mux.HandleFunc("GET /api/products/{id}", productHandler.GetByID)
+	mux.HandleFunc("PUT /api/products/{id}", productHandler.Update)
+	mux.HandleFunc("DELETE /api/products/{id}", productHandler.Delete)
 
-	// Initialize Handlers
-	handler.NewProductHandler(mux, productUsecase)
-	handler.NewCategoryHandler(mux, categoryUsecase)
+	// Category Routes
+	mux.HandleFunc("GET /api/categories", categoryHandler.GetAll)
+	mux.HandleFunc("POST /api/categories", categoryHandler.Create)
+	mux.HandleFunc("GET /api/categories/{id}", categoryHandler.GetByID)
+	mux.HandleFunc("PUT /api/categories/{id}", categoryHandler.Update)
+	mux.HandleFunc("DELETE /api/categories/{id}", categoryHandler.Delete)
 
-	// Start Server
-	log.Printf("Server starting on %s", cfg.ServerAddress)
-	if err := http.ListenAndServe(cfg.ServerAddress, mux); err != nil {
-		log.Fatalf("Server failed to start: %v", err)
+	// Server
+	log.Printf("Server starting on port %s", cfg.Port)
+	if err := http.ListenAndServe(cfg.Port, mux); err != nil {
+		log.Fatal(err)
 	}
 }

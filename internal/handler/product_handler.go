@@ -3,107 +3,92 @@ package handler
 import (
 	"encoding/json"
 	"kasir-api/internal/domain"
+	"kasir-api/internal/service"
 	"net/http"
 	"strconv"
 )
 
 type ProductHandler struct {
-	PUsecase domain.ProductUsecase
+	service *service.ProductService
 }
 
-func NewProductHandler(mux *http.ServeMux, pu domain.ProductUsecase) {
-	handler := &ProductHandler{
-		PUsecase: pu,
-	}
-	mux.HandleFunc("GET /api/products", handler.Fetch)
-	mux.HandleFunc("POST /api/products", handler.Store)
-	mux.HandleFunc("GET /api/products/{id}", handler.GetByID)
-	mux.HandleFunc("PUT /api/products/{id}", handler.Update)
-	mux.HandleFunc("DELETE /api/products/{id}", handler.Delete)
+func NewProductHandler(service *service.ProductService) *ProductHandler {
+	return &ProductHandler{service: service}
 }
 
-func (h *ProductHandler) Fetch(w http.ResponseWriter, r *http.Request) {
-	products, err := h.PUsecase.Fetch(r.Context())
+func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	products, err := h.service.GetAll(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(products)
 }
 
 func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	product, err := h.PUsecase.GetByID(r.Context(), id)
+	product, err := h.service.GetByID(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(product)
 }
 
-func (h *ProductHandler) Store(w http.ResponseWriter, r *http.Request) {
+func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	var product domain.Product
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	if err := h.PUsecase.Store(r.Context(), &product); err != nil {
+	if err := h.service.Create(r.Context(), &product); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(product)
 }
 
 func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
 	var product domain.Product
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	product.ID = id
-
-	if err := h.PUsecase.Update(r.Context(), &product); err != nil {
+	if err := h.service.Update(r.Context(), id, &product); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(product)
 }
 
 func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	if err := h.PUsecase.Delete(r.Context(), id); err != nil {
+	if err := h.service.Delete(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"message": "sukses delete"})
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "Product deleted successfully",
+	})
 }
