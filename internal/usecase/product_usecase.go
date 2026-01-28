@@ -18,10 +18,10 @@ func NewProductUsecase(p domain.ProductRepository, timeout time.Duration) domain
 	}
 }
 
-func (u *productUsecase) Fetch(ctx context.Context) ([]domain.Product, error) {
+func (u *productUsecase) GetAll(ctx context.Context) ([]domain.Product, error) {
 	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
 	defer cancel()
-	return u.productRepo.Fetch(ctx)
+	return u.productRepo.GetAll(ctx)
 }
 
 func (u *productUsecase) GetByID(ctx context.Context, id int) (domain.Product, error) {
@@ -30,16 +30,16 @@ func (u *productUsecase) GetByID(ctx context.Context, id int) (domain.Product, e
 	return u.productRepo.GetByID(ctx, id)
 }
 
-func (u *productUsecase) Store(ctx context.Context, p *domain.Product) error {
+func (u *productUsecase) Create(ctx context.Context, p *domain.Product) error {
 	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
 	defer cancel()
-	return u.productRepo.Store(ctx, p)
+	return u.productRepo.Create(ctx, p)
 }
 
-func (u *productUsecase) Update(ctx context.Context, p *domain.Product) error {
+func (u *productUsecase) Update(ctx context.Context, id int, p *domain.Product) error {
 	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
 	defer cancel()
-	return u.productRepo.Update(ctx, p)
+	return u.productRepo.Update(ctx, id, p)
 }
 
 func (u *productUsecase) Delete(ctx context.Context, id int) error {

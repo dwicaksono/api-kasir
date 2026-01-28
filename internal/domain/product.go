@@ -24,3 +24,11 @@ type ProductRepository interface {
 	Update(ctx context.Context, id int, product *Product) error
 	Delete(ctx context.Context, id int) error
 }
+
+type ProductUsecase interface {
+	GetAll(ctx context.Context) ([]Product, error)
+	GetByID(ctx context.Context, id int) (Product, error)
+	Create(ctx context.Context, product *Product) error
+	Update(ctx context.Context, id int, product *Product) error
+	Delete(ctx context.Context, id int) error
+}

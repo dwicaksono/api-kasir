@@ -20,3 +20,11 @@ type CategoryRepository interface {
 	Update(ctx context.Context, id int, category *Category) error
 	Delete(ctx context.Context, id int) error
 }
+
+type CategoryUsecase interface {
+	GetAll(ctx context.Context) ([]Category, error)
+	GetByID(ctx context.Context, id int) (Category, error)
+	Create(ctx context.Context, category *Category) error
+	Update(ctx context.Context, id int, category *Category) error
+	Delete(ctx context.Context, id int) error
+}

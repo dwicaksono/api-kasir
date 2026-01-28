@@ -18,10 +18,10 @@ func NewCategoryUsecase(c domain.CategoryRepository, timeout time.Duration) doma
 	}
 }
 
-func (u *categoryUsecase) Fetch(ctx context.Context) ([]domain.Category, error) {
+func (u *categoryUsecase) GetAll(ctx context.Context) ([]domain.Category, error) {
 	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
 	defer cancel()
-	return u.categoryRepo.Fetch(ctx)
+	return u.categoryRepo.GetAll(ctx)
 }
 
 func (u *categoryUsecase) GetByID(ctx context.Context, id int) (domain.Category, error) {
@@ -30,16 +30,16 @@ func (u *categoryUsecase) GetByID(ctx context.Context, id int) (domain.Category,
 	return u.categoryRepo.GetByID(ctx, id)
 }
 
-func (u *categoryUsecase) Store(ctx context.Context, c *domain.Category) error {
+func (u *categoryUsecase) Create(ctx context.Context, c *domain.Category) error {
 	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
 	defer cancel()
-	return u.categoryRepo.Store(ctx, c)
+	return u.categoryRepo.Create(ctx, c)
 }
 
-func (u *categoryUsecase) Update(ctx context.Context, c *domain.Category) error {
+func (u *categoryUsecase) Update(ctx context.Context, id int, c *domain.Category) error {
 	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
 	defer cancel()
-	return u.categoryRepo.Update(ctx, c)
+	return u.categoryRepo.Update(ctx, id, c)
 }
 
 func (u *categoryUsecase) Delete(ctx context.Context, id int) error {
