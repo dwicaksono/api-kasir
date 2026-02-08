@@ -76,6 +76,46 @@ func main() {
 				ALTER TABLE products ADD CONSTRAINT fk_product_category FOREIGN KEY (category_id) REFERENCES categories(id); 
 			END IF; 
 		END $$;`,
+
+		// Create Transactions Table
+		`CREATE TABLE IF NOT EXISTS transactions (
+			id SERIAL PRIMARY KEY,
+			total_amount DECIMAL(15, 2) NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		);`,
+		// Ensure columns exist (if table existed previously)
+		`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`,
+		`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`,
+
+		// Create Transaction Details Table
+		`CREATE TABLE IF NOT EXISTS transaction_details (
+			id SERIAL PRIMARY KEY,
+			transaction_id INT NOT NULL,
+			product_id INT NOT NULL,
+			product_name VARCHAR(255),
+			quantity INT NOT NULL,
+			sub_total DECIMAL(15, 2) NOT NULL,
+			FOREIGN KEY (transaction_id) REFERENCES transactions(id),
+			FOREIGN KEY (product_id) REFERENCES products(id)
+		);`,
+
+		// Fix subtotal column name if it exists from previous schema
+		`DO $$ 
+		BEGIN 
+			IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'transaction_details' AND column_name = 'subtotal') THEN
+				-- If sub_total also exists (e.g. from recent migration attempt), drop it to allow rename
+				IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'transaction_details' AND column_name = 'sub_total') THEN
+					 ALTER TABLE transaction_details DROP COLUMN sub_total;
+				END IF;
+				ALTER TABLE transaction_details RENAME COLUMN subtotal TO sub_total;
+			END IF;
+		END $$;`,
+
+		// Ensure columns exist (idempotent)
+		`ALTER TABLE transaction_details ADD COLUMN IF NOT EXISTS product_name VARCHAR(255);`,
+		`ALTER TABLE transaction_details ADD COLUMN IF NOT EXISTS quantity INT;`,
+		`ALTER TABLE transaction_details ADD COLUMN IF NOT EXISTS sub_total DECIMAL(15, 2);`,
 	}
 
 	for _, s := range sqls {

@@ -32,21 +32,25 @@ func Run() {
 
 	// Dependencies Injection
 	// Repositories
-	// Pass db (which is *sql.DB) directly if repository expects it.
-	// Note: previous implementation passed db to NewProductRepository(db)
 	productRepo := repository.NewProductRepository(db)
 	categoryRepo := repository.NewCategoryRepository(db)
+	transactionRepo := repository.NewTransactionRepository(db)
+	reportRepo := repository.NewReportRepository(db)
 
 	// Context Timeout
-	timeout := 2 * time.Second
+	timeout := 10 * time.Second
 
 	// Usecases
 	productUsecase := usecase.NewProductUsecase(productRepo, timeout)
 	categoryUsecase := usecase.NewCategoryUsecase(categoryRepo, timeout)
+	transactionUsecase := usecase.NewTransactionUsecase(transactionRepo, productRepo, timeout)
+	reportUsecase := usecase.NewReportUsecase(reportRepo, timeout)
 
 	// Handlers
 	productHandler := handler.NewProductHandler(productUsecase)
 	categoryHandler := handler.NewCategoryHandler(categoryUsecase)
+	transactionHandler := handler.NewTransactionHandler(transactionUsecase)
+	reportHandler := handler.NewReportHandler(reportUsecase)
 
 	// Router
 	mux := http.NewServeMux()
@@ -71,6 +75,12 @@ func Run() {
 	mux.HandleFunc("GET /api/categories/{id}", categoryHandler.GetByID)
 	mux.HandleFunc("PUT /api/categories/{id}", categoryHandler.Update)
 	mux.HandleFunc("DELETE /api/categories/{id}", categoryHandler.Delete)
+
+	// Transaction Routes
+	mux.HandleFunc("POST /api/transactions", transactionHandler.CreateTransaction)
+
+	// Report Route
+	mux.HandleFunc("GET /api/report", reportHandler.GetReport)
 
 	// Server
 	log.Printf("Server starting on port %s", cfg.Port)

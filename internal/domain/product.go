@@ -18,7 +18,7 @@ type Product struct {
 }
 
 type ProductRepository interface {
-	GetAll(ctx context.Context) ([]Product, error)
+	GetAll(ctx context.Context, name string) ([]Product, error)
 	GetByID(ctx context.Context, id int) (Product, error)
 	Create(ctx context.Context, product *Product) error
 	Update(ctx context.Context, id int, product *Product) error
@@ -26,7 +26,7 @@ type ProductRepository interface {
 }
 
 type ProductUsecase interface {
-	GetAll(ctx context.Context) ([]Product, error)
+	GetAll(ctx context.Context, name string) ([]Product, error)
 	GetByID(ctx context.Context, id int) (Product, error)
 	Create(ctx context.Context, product *Product) error
 	Update(ctx context.Context, id int, product *Product) error

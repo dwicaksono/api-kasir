@@ -15,14 +15,20 @@ func NewProductRepository(db *sql.DB) *ProductRepository {
 	return &ProductRepository{db: db}
 }
 
-func (repo *ProductRepository) GetAll(ctx context.Context) ([]domain.Product, error) {
+func (repo *ProductRepository) GetAll(ctx context.Context, name string) ([]domain.Product, error) {
 	var products []domain.Product
 	query := `
 		SELECT p.id, p.name, p.description, p.price, p.stock, p.category_id, COALESCE(c.name, '') as category_name, p.created_at, p.updated_at 
 		FROM products p
 		LEFT JOIN categories c ON p.category_id = c.id
 	`
-	rows, err := repo.db.QueryContext(ctx, query)
+	var args []interface{}
+	if name != "" {
+		query += " WHERE p.name ILIKE $1"
+		args = append(args, "%"+name+"%")
+	}
+
+	rows, err := repo.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

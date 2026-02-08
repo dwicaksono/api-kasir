@@ -18,10 +18,10 @@ func NewProductUsecase(p domain.ProductRepository, timeout time.Duration) domain
 	}
 }
 
-func (u *productUsecase) GetAll(ctx context.Context) ([]domain.Product, error) {
+func (u *productUsecase) GetAll(ctx context.Context, name string) ([]domain.Product, error) {
 	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
 	defer cancel()
-	return u.productRepo.GetAll(ctx)
+	return u.productRepo.GetAll(ctx, name)
 }
 
 func (u *productUsecase) GetByID(ctx context.Context, id int) (domain.Product, error) {

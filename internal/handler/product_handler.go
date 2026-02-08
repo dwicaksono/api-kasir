@@ -17,7 +17,8 @@ func NewProductHandler(usecase domain.ProductUsecase) *ProductHandler {
 
 func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	products, err := h.usecase.GetAll(r.Context())
+	name := r.URL.Query().Get("name")
+	products, err := h.usecase.GetAll(r.Context(), name)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
